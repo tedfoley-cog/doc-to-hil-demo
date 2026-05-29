@@ -1,0 +1,37 @@
+{
+  "document_id": "DIAG-SPEC-2024-002",
+  "revision": "1.5",
+  "title": "Diagnostic Trouble Code Matrix",
+  "standard": "ISO 15031-6 / SAE J2012",
+  "dtcs": [
+    {"code": "P0101", "description": "MAF Sensor Range/Performance", "enable_condition": "Engine running > 2s", "fault_action": "Reduce torque 20%", "debounce": "3 consecutive trips", "mil": true, "category": "powertrain"},
+    {"code": "P0117", "description": "Coolant Temp Sensor Low", "enable_condition": "Engine running > 30s", "fault_action": "Use default 90C", "debounce": "2 consecutive trips", "mil": true, "category": "powertrain"},
+    {"code": "P0300", "description": "Random Misfire Detected", "enable_condition": "RPM > 500, load > 10%", "fault_action": "Fuel cut on affected cylinder", "debounce": "50 misfires / 200 rev", "mil": true, "category": "powertrain"},
+    {"code": "P0335", "description": "Crankshaft Position Sensor", "enable_condition": "Cranking or running", "fault_action": "No start / stall", "debounce": "Immediate", "mil": true, "category": "powertrain"},
+    {"code": "P0500", "description": "Vehicle Speed Sensor", "enable_condition": "Vehicle moving, no ABS fault", "fault_action": "Disable cruise control", "debounce": "3 consecutive trips", "mil": true, "category": "powertrain"},
+    {"code": "P0562", "description": "System Voltage Low", "enable_condition": "Engine running > 5s", "fault_action": "Load shed non-essential", "debounce": "5 seconds continuous", "mil": true, "category": "powertrain"},
+    {"code": "P0602", "description": "PCM Not Programmed", "enable_condition": "Key on", "fault_action": "Prevent start", "debounce": "Immediate", "mil": true, "category": "powertrain"},
+    {"code": "P0700", "description": "Transmission Control System", "enable_condition": "TCM reports fault", "fault_action": "Limp mode (3rd gear lock)", "debounce": "Per TCM debounce", "mil": true, "category": "powertrain"},
+    {"code": "P0715", "description": "Turbine Speed Sensor", "enable_condition": "Shift in progress", "fault_action": "Abort shift, limp mode", "debounce": "2 consecutive shifts", "mil": true, "category": "powertrain"},
+    {"code": "P0730", "description": "Incorrect Gear Ratio", "enable_condition": "Shift complete", "fault_action": "Log event, request diag", "debounce": "3 consecutive shifts", "mil": false, "category": "powertrain"},
+    {"code": "C0035", "description": "LF Wheel Speed Sensor", "enable_condition": "Vehicle speed > 10 km/h", "fault_action": "Disable ABS on LF", "debounce": "2 seconds continuous", "mil": false, "category": "chassis"},
+    {"code": "C0040", "description": "RF Wheel Speed Sensor", "enable_condition": "Vehicle speed > 10 km/h", "fault_action": "Disable ABS on RF", "debounce": "2 seconds continuous", "mil": false, "category": "chassis"},
+    {"code": "C0045", "description": "LR Wheel Speed Sensor", "enable_condition": "Vehicle speed > 10 km/h", "fault_action": "Disable ABS on LR", "debounce": "2 seconds continuous", "mil": false, "category": "chassis"},
+    {"code": "C0050", "description": "RR Wheel Speed Sensor", "enable_condition": "Vehicle speed > 10 km/h", "fault_action": "Disable ABS on RR", "debounce": "2 seconds continuous", "mil": false, "category": "chassis"},
+    {"code": "C0121", "description": "Valve Relay Circuit", "enable_condition": "Key on", "fault_action": "Full ABS disable", "debounce": "Immediate", "mil": false, "category": "chassis"},
+    {"code": "C0550", "description": "ECU Internal Fault", "enable_condition": "Key on", "fault_action": "Full ABS disable", "debounce": "3 key cycles", "mil": false, "category": "chassis"},
+    {"code": "B1000", "description": "BCM Internal Fault", "enable_condition": "Key on", "fault_action": "Safe mode (locks only)", "debounce": "3 key cycles", "mil": false, "category": "body"},
+    {"code": "B1318", "description": "Battery Voltage Low", "enable_condition": "Key on, engine off", "fault_action": "Disable interior lights", "debounce": "30 seconds continuous", "mil": false, "category": "body"},
+    {"code": "B1600", "description": "PATS Key Not Programmed", "enable_condition": "Key on", "fault_action": "Prevent start", "debounce": "Immediate", "mil": false, "category": "body"},
+    {"code": "B2100", "description": "Door Ajar Circuit", "enable_condition": "Key on", "fault_action": "Override dome light", "debounce": "500ms debounce", "mil": false, "category": "body"}
+  ],
+  "cross_references": [
+    {"dtc": "P0101", "requirement": "REQ-PM-004", "signal": "EMS_Status_1.IntakeAirTemp", "ecu": "EMS"},
+    {"dtc": "P0335", "requirement": "REQ-PM-001", "signal": "EMS_Status_1.EngineRPM", "ecu": "EMS"},
+    {"dtc": "P0562", "requirement": "REQ-PM-004", "signal": "PCM_Status_1.BatteryVoltage", "ecu": "PCM"},
+    {"dtc": "P0700", "requirement": "REQ-TR-009", "signal": "TCM_Status_1.ShiftAbortFlag", "ecu": "TCM"},
+    {"dtc": "P0715", "requirement": "REQ-TR-008", "signal": "TCM_Status_1.ShiftPhase", "ecu": "TCM"},
+    {"dtc": "P0730", "requirement": "REQ-TR-009", "signal": "TCM_Status_1.CurrentGear", "ecu": "TCM"},
+    {"dtc": "C0035", "requirement": "REQ-TR-003", "signal": "ABS_WheelSpeed.WheelSpeed_FL", "ecu": "ABS"}
+  ]
+}

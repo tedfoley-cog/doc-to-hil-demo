@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document-to-HIL Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1e3a5f);
+      color: #fff;
+      padding: 1.5rem 2rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p { color: #94a3b8; font-size: 0.9rem; margin-top: 0.3rem; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1.2rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .card .number { font-size: 2rem; font-weight: 700; color: #2563eb; }
+    .card .label { font-size: 0.82rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .section { background: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .section h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+
+    .pipeline { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .pipeline .stage {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.8rem;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .stage.pending { background: #f1f5f9; color: #64748b; border: 2px solid #e2e8f0; }
+    .stage.running { background: #dbeafe; color: #1d4ed8; border: 2px solid #3b82f6; }
+    .stage.complete { background: #dcfce7; color: #166534; border: 2px solid #22c55e; }
+    .stage.failed { background: #fee2e2; color: #991b1b; border: 2px solid #ef4444; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: #f8fafc; color: #475569; text-align: left; padding: 0.6rem 0.8rem; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 0.5rem 0.8rem; border-bottom: 1px solid #f1f5f9; }
+    tr:hover td { background: #f8fafc; }
+
+    .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge.pass { background: #dcfce7; color: #166534; }
+    .badge.fail { background: #fee2e2; color: #991b1b; }
+    .badge.pdf { background: #dbeafe; color: #1e40af; }
+    .badge.excel { background: #dcfce7; color: #166534; }
+    .badge.word { background: #fef3c7; color: #92400e; }
+
+    .graph-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; }
+    .graph-stat {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 0.8rem;
+      text-align: center;
+    }
+    .graph-stat .value { font-size: 1.4rem; font-weight: 700; color: #6366f1; }
+    .graph-stat .type { font-size: 0.78rem; color: #64748b; }
+
+    footer { text-align: center; padding: 1rem; color: #94a3b8; font-size: 0.8rem; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Document-to-HIL Pipeline</h1>
+    <p>Parse unstructured specs &rarr; Build knowledge graph &rarr; Generate &amp; execute HIL/SIL tests</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Pipeline Status -->
+    <div class="section">
+      <h2>Pipeline Status</h2>
+      <div class="pipeline">
+        {% set stages = [
+          ("Parse Documents", state.get("pipeline", {}).get("parse_documents", "pending")),
+          ("Build Knowledge Graph", state.get("pipeline", {}).get("build_knowledge_graph", "pending")),
+          ("Generate Tests", state.get("pipeline", {}).get("generate_tests", "pending")),
+          ("Execute SIL Tests", state.get("pipeline", {}).get("execute_sil_tests", "pending")),
+          ("Produce Dashboard", state.get("pipeline", {}).get("produce_dashboard", "pending"))
+        ] %}
+        {% for name, status in stages %}
+        <div class="stage {{ status }}">{{ name }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    {% if inventory %}
+    {% set summary = inventory.get("summary", {}) %}
+    <div class="cards">
+      <div class="card">
+        <div class="number">{{ summary.get("documents", 0) }}</div>
+        <div class="label">Documents Parsed</div>
+      </div>
+      <div class="card">
+        <div class="number">{{ summary.get("states", 0) }}</div>
+        <div class="label">States Extracted</div>
+      </div>
+      <div class="card">
+        <div class="number">{{ summary.get("transitions", 0) }}</div>
+        <div class="label">Transitions</div>
+      </div>
+      <div class="card">
+        <div class="number">{{ summary.get("signals", 0) }}</div>
+        <div class="label">CAN Signals</div>
+      </div>
+      <div class="card">
+        <div class="number">{{ summary.get("requirements", 0) }}</div>
+        <div class="label">Requirements</div>
+      </div>
+      <div class="card">
+        <div class="number">{{ summary.get("dtcs", 0) }}</div>
+        <div class="label">DTCs</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Document Inventory -->
+    {% if inventory and inventory.get("documents") %}
+    <div class="section">
+      <h2>Document Inventory</h2>
+      <table>
+        <thead>
+          <tr><th>Document</th><th>Type</th><th>Entities</th><th>Breakdown</th></tr>
+        </thead>
+        <tbody>
+          {% for doc in inventory.get("documents", []) %}
+          <tr>
+            <td><strong>{{ doc.get("document_id", "") }}</strong><br><small>{{ doc.get("title", "") }}</small></td>
+            <td>
+              {% set dtype = doc.get("type", "") %}
+              {% if "pdf" in dtype %}<span class="badge pdf">PDF</span>
+              {% elif "excel" in dtype %}<span class="badge excel">Excel</span>
+              {% else %}<span class="badge word">Word</span>{% endif %}
+            </td>
+            <td>{{ doc.get("entity_count", 0) }}</td>
+            <td>
+              {% for etype, count in doc.get("entities_by_type", {}).items() %}
+              {{ etype }}: {{ count }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Knowledge Graph -->
+    {% if knowledge_graph and knowledge_graph.get("summary") %}
+    <div class="section">
+      <h2>Knowledge Graph</h2>
+      {% set kg = knowledge_graph.get("summary", {}) %}
+      <div class="graph-summary">
+        <div class="graph-stat">
+          <div class="value">{{ kg.get("total_nodes", 0) }}</div>
+          <div class="type">Total Nodes</div>
+        </div>
+        <div class="graph-stat">
+          <div class="value">{{ kg.get("total_edges", 0) }}</div>
+          <div class="type">Total Edges</div>
+        </div>
+        {% for ntype, count in kg.get("nodes_by_type", {}).items() %}
+        <div class="graph-stat">
+          <div class="value">{{ count }}</div>
+          <div class="type">{{ ntype }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Test Results -->
+    {% if test_results and test_results.get("verdicts") %}
+    <div class="section">
+      <h2>SIL Test Results</h2>
+      {% set tr = test_results.get("summary", {}) %}
+      <p style="margin-bottom: 1rem;">
+        <strong>{{ tr.get("passed", 0) }}</strong> / <strong>{{ tr.get("total", 0) }}</strong> passed
+        {% if tr.get("failed", 0) > 0 %}
+        &mdash; <span style="color: #dc2626;">{{ tr.get("failed", 0) }} failed</span>
+        {% endif %}
+      </p>
+      <table>
+        <thead>
+          <tr><th>Test ID</th><th>Requirement</th><th>Steps</th><th>Duration</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          {% for v in test_results.get("verdicts", []) %}
+          <tr>
+            <td>{{ v.get("test_id", "") }}</td>
+            <td>{{ v.get("requirement_id", "") }}</td>
+            <td>{{ v.get("steps_passed", 0) }}/{{ v.get("steps_executed", 0) }}</td>
+            <td>{{ "%.0f"|format(v.get("duration_ms", 0)) }}ms</td>
+            <td>
+              {% if v.get("passed") %}
+              <span class="badge pass">PASS</span>
+              {% else %}
+              <span class="badge fail">FAIL</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not inventory or not inventory.get("documents") %}
+    <div class="section" style="text-align: center; padding: 3rem;">
+      <h2 style="border: none; color: #94a3b8;">Waiting for Pipeline Execution</h2>
+      <p style="color: #94a3b8; margin-top: 0.5rem;">
+        Prompt Devin to parse the source documents and run the comprehension pipeline.
+        The dashboard will populate as each stage completes.
+      </p>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <footer>
+    Document-to-HIL Pipeline &mdash; Data Modernization Demo &copy; 2026 &middot; ASAM XIL &middot; ISO 15031
+  </footer>
+</body>
+</html>

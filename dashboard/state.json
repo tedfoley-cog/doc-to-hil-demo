@@ -1,0 +1,10 @@
+{
+  "pipeline": {
+    "parse_documents": "pending",
+    "build_knowledge_graph": "pending",
+    "generate_tests": "pending",
+    "execute_sil_tests": "pending",
+    "produce_dashboard": "pending"
+  },
+  "last_updated": null
+}
