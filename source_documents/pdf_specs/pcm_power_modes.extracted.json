@@ -1,0 +1,49 @@
+{
+  "document_id": "PCM-SPEC-2024-001",
+  "revision": "3.2",
+  "title": "PCM Power Mode Specification",
+  "asil": "B",
+  "subsystem": "Powertrain Control Module",
+  "state_machine": {
+    "name": "Power Mode Manager",
+    "states": [
+      {"id": "OFF", "code": "0x00", "description": "Vehicle fully powered down"},
+      {"id": "ACC", "code": "0x01", "description": "Accessory mode"},
+      {"id": "RUN", "code": "0x02", "description": "Ignition on, engine off"},
+      {"id": "CRANK", "code": "0x03", "description": "Starter motor engaged"},
+      {"id": "RUN_ENGINE", "code": "0x04", "description": "Engine running, normal operation"},
+      {"id": "EMERGENCY_STOP", "code": "0x05", "description": "Critical fault, controlled shutdown"}
+    ],
+    "transitions": [
+      {"from": "OFF", "to": "ACC", "condition": "IGN_SW == ACC", "guard": "BATT_V > 9.0", "timeout_ms": null},
+      {"from": "ACC", "to": "RUN", "condition": "IGN_SW == RUN", "guard": "BATT_V > 10.5", "timeout_ms": null},
+      {"from": "ACC", "to": "OFF", "condition": "IGN_SW == OFF", "guard": null, "timeout_ms": 200},
+      {"from": "RUN", "to": "CRANK", "condition": "START_REQ == TRUE", "guard": "TRANS_RANGE == P or N", "timeout_ms": null},
+      {"from": "CRANK", "to": "RUN_ENGINE", "condition": "ENGINE_RPM > 500", "guard": "OIL_PRESS > 15", "timeout_ms": null},
+      {"from": "CRANK", "to": "RUN", "condition": "CRANK_TIMEOUT", "guard": null, "timeout_ms": 10000},
+      {"from": "RUN_ENGINE", "to": "RUN", "condition": "IGN_SW == RUN && ENGINE_RPM < 100", "guard": null, "timeout_ms": 3000},
+      {"from": "RUN_ENGINE", "to": "EMERGENCY_STOP", "condition": "FAULT_CRITICAL == TRUE", "guard": null, "timeout_ms": null},
+      {"from": "RUN", "to": "ACC", "condition": "IGN_SW == ACC", "guard": null, "timeout_ms": 500},
+      {"from": "RUN", "to": "OFF", "condition": "IGN_SW == OFF", "guard": null, "timeout_ms": 500},
+      {"from": "EMERGENCY_STOP", "to": "OFF", "condition": "FAULT_CLEARED && IGN_SW == OFF", "guard": null, "timeout_ms": 5000}
+    ]
+  },
+  "requirements": [
+    {"id": "REQ-PM-001", "text": "System shall transition to EMERGENCY_STOP within 50ms of critical fault detection", "asil": "B"},
+    {"id": "REQ-PM-002", "text": "CRANK state shall not persist for more than 10 seconds", "asil": "B"},
+    {"id": "REQ-PM-003", "text": "RUN to CRANK transition inhibited unless TRANS_RANGE is PARK or NEUTRAL", "asil": "B"},
+    {"id": "REQ-PM-004", "text": "Battery voltage below 9.0V shall prevent upward state transition from OFF", "asil": "B"},
+    {"id": "REQ-PM-005", "text": "EMERGENCY_STOP shall maintain fuel pump shutoff until faults cleared AND ignition cycled to OFF", "asil": "B"}
+  ],
+  "can_signals": [
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "PowerModeState", "start_bit": 0, "length": 4, "scale": 1.0, "offset": 0, "unit": "", "range": "0-5"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "BatteryVoltage", "start_bit": 4, "length": 12, "scale": 0.05, "offset": 0, "unit": "V", "range": "0-200"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "EngineRPM", "start_bit": 16, "length": 16, "scale": 0.25, "offset": 0, "unit": "RPM", "range": "0-16383"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "IgnitionSwitch", "start_bit": 32, "length": 3, "scale": 1.0, "offset": 0, "unit": "", "range": "0-4"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "StartRequest", "start_bit": 35, "length": 1, "scale": 1.0, "offset": 0, "unit": "", "range": "0-1"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "FaultCritical", "start_bit": 36, "length": 1, "scale": 1.0, "offset": 0, "unit": "", "range": "0-1"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "TransRange", "start_bit": 37, "length": 3, "scale": 1.0, "offset": 0, "unit": "", "range": "0-5"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "OilPressure", "start_bit": 40, "length": 8, "scale": 1.0, "offset": 0, "unit": "kPa", "range": "0-255"},
+    {"message": "PCM_Status_1", "message_id": "0x180", "signal": "CrankTimer", "start_bit": 48, "length": 16, "scale": 1.0, "offset": 0, "unit": "ms", "range": "0-65535"}
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "document_id": "TCM-SPEC-2024-003",
+  "revision": "2.1",
+  "title": "Transmission Shift Logic Specification",
+  "asil": "B",
+  "subsystem": "Transmission Control Module",
+  "flow_diagram": {
+    "name": "Shift Execution Flow",
+    "steps": [
+      {"id": "SHIFT_REQ", "label": "Shift Request", "type": "start"},
+      {"id": "TORQUE_CHK", "label": "Torque Capacity Check", "type": "decision", "pass": "RPM_CHK", "fail": "REJECT"},
+      {"id": "RPM_CHK", "label": "Engine Speed Within Range", "type": "decision", "pass": "TORQUE_RED", "fail": "WAIT_RETRY"},
+      {"id": "TORQUE_RED", "label": "Reduce Torque (torque phase)", "type": "action"},
+      {"id": "CLUTCH", "label": "Apply Clutch (inertia phase)", "type": "action"},
+      {"id": "SYNC", "label": "Synchronize RPM", "type": "action"},
+      {"id": "VERIFY", "label": "Shift Complete Verified", "type": "decision", "pass": "RESTORE", "fail": "ABORT"},
+      {"id": "RESTORE", "label": "Restore Torque (end phase)", "type": "end"},
+      {"id": "REJECT", "label": "Reject Shift", "type": "terminal"},
+      {"id": "WAIT_RETRY", "label": "Wait and Retry", "type": "terminal"},
+      {"id": "ABORT", "label": "Abort Shift (DTC logged)", "type": "terminal"}
+    ],
+    "edges": [
+      {"from": "SHIFT_REQ", "to": "TORQUE_CHK"},
+      {"from": "TORQUE_CHK", "to": "RPM_CHK", "label": "Yes"},
+      {"from": "TORQUE_CHK", "to": "REJECT", "label": "No"},
+      {"from": "RPM_CHK", "to": "TORQUE_RED", "label": "Yes"},
+      {"from": "RPM_CHK", "to": "WAIT_RETRY", "label": "No"},
+      {"from": "TORQUE_RED", "to": "CLUTCH"},
+      {"from": "CLUTCH", "to": "SYNC"},
+      {"from": "SYNC", "to": "VERIFY"},
+      {"from": "VERIFY", "to": "RESTORE", "label": "Yes"},
+      {"from": "VERIFY", "to": "ABORT", "label": "No"}
+    ]
+  },
+  "shift_schedules": {
+    "upshift_normal": [
+      {"from_gear": 1, "to_gear": 2, "throttle_ranges": [15, 25, 35, 45]},
+      {"from_gear": 2, "to_gear": 3, "throttle_ranges": [25, 40, 55, 70]},
+      {"from_gear": 3, "to_gear": 4, "throttle_ranges": [35, 55, 75, 95]},
+      {"from_gear": 4, "to_gear": 5, "throttle_ranges": [45, 65, 90, 115]},
+      {"from_gear": 5, "to_gear": 6, "throttle_ranges": [55, 75, 100, 130]}
+    ],
+    "downshift_normal": [
+      {"from_gear": 2, "to_gear": 1, "throttle_ranges": [10, 18, 28, 38]},
+      {"from_gear": 3, "to_gear": 2, "throttle_ranges": [20, 32, 45, 60]},
+      {"from_gear": 4, "to_gear": 3, "throttle_ranges": [28, 45, 65, 85]},
+      {"from_gear": 5, "to_gear": 4, "throttle_ranges": [38, 55, 80, 105]},
+      {"from_gear": 6, "to_gear": 5, "throttle_ranges": [48, 65, 90, 120]}
+    ]
+  },
+  "gear_range_state_machine": {
+    "states": ["P", "R", "N", "D"],
+    "transitions": [
+      {"from": "P", "to": "R", "condition": "Brake pressed + shift button", "safety_req": "REQ-TR-001"},
+      {"from": "R", "to": "N", "condition": "Brake pressed + shift button", "safety_req": "REQ-TR-002"},
+      {"from": "N", "to": "D", "condition": "Vehicle speed < 5 km/h", "safety_req": "REQ-TR-003"},
+      {"from": "D", "to": "N", "condition": "Brake pressed + shift button", "safety_req": "REQ-TR-004"},
+      {"from": "N", "to": "R", "condition": "Speed < 3 km/h + brake", "safety_req": "REQ-TR-005"},
+      {"from": "ANY", "to": "P", "condition": "Speed < 2 km/h + brake + button", "safety_req": "REQ-TR-006"}
+    ]
+  },
+  "requirements": [
+    {"id": "REQ-TR-001", "text": "Reverse engagement shall require brake pedal application", "asil": "B"},
+    {"id": "REQ-TR-002", "text": "Neutral engagement from reverse shall require brake pedal", "asil": "B"},
+    {"id": "REQ-TR-003", "text": "Drive engagement shall be inhibited above 5 km/h", "asil": "B"},
+    {"id": "REQ-TR-004", "text": "Shift to neutral from drive requires brake pedal at any speed", "asil": "B"},
+    {"id": "REQ-TR-005", "text": "Reverse from neutral inhibited above 3 km/h", "asil": "B"},
+    {"id": "REQ-TR-006", "text": "Park engagement inhibited above 2 km/h", "asil": "B"},
+    {"id": "REQ-TR-007", "text": "Torque reduction shall complete within 100ms of shift initiation", "asil": "B"},
+    {"id": "REQ-TR-008", "text": "Total shift time shall not exceed 400ms", "asil": "B"},
+    {"id": "REQ-TR-009", "text": "Shift abort shall log DTC P0730", "asil": "QM"}
+  ],
+  "can_signals": [
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "CurrentGear", "start_bit": 0, "length": 4, "scale": 1.0, "offset": 0, "unit": "", "range": "0-8"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "TargetGear", "start_bit": 4, "length": 4, "scale": 1.0, "offset": 0, "unit": "", "range": "0-8"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "ShiftInProgress", "start_bit": 8, "length": 1, "scale": 1.0, "offset": 0, "unit": "", "range": "0-1"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "ShiftPhase", "start_bit": 9, "length": 3, "scale": 1.0, "offset": 0, "unit": "", "range": "0-5"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "GearRange", "start_bit": 12, "length": 3, "scale": 1.0, "offset": 0, "unit": "", "range": "0-4"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "VehicleSpeed", "start_bit": 16, "length": 16, "scale": 0.01, "offset": 0, "unit": "km/h", "range": "0-655"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "ThrottlePosition", "start_bit": 32, "length": 8, "scale": 0.392, "offset": 0, "unit": "%", "range": "0-100"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "EngineLoad", "start_bit": 40, "length": 8, "scale": 0.392, "offset": 0, "unit": "%", "range": "0-100"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "TorqueReductionReq", "start_bit": 48, "length": 1, "scale": 1.0, "offset": 0, "unit": "", "range": "0-1"},
+    {"message": "TCM_Status_1", "message_id": "0x280", "signal": "ShiftAbortFlag", "start_bit": 49, "length": 1, "scale": 1.0, "offset": 0, "unit": "", "range": "0-1"}
+  ]
+}

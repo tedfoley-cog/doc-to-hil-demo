@@ -1,0 +1,51 @@
+{
+  "document_id": "CAN-CAT-2024-001",
+  "revision": "4.0",
+  "title": "CAN Signal Catalog",
+  "network": "HS-CAN",
+  "baudrate": 500000,
+  "messages": [
+    {
+      "id": "0x100", "name": "EMS_Torque_1", "sender": "EMS", "cycle_ms": 10, "dlc": 8,
+      "signals": [
+        {"name": "ActualTorque", "start_bit": 0, "length": 16, "byte_order": "little_endian", "scale": 0.5, "offset": -500, "unit": "Nm", "min": -500, "max": 1500},
+        {"name": "RequestedTorque", "start_bit": 16, "length": 16, "byte_order": "little_endian", "scale": 0.5, "offset": -500, "unit": "Nm", "min": -500, "max": 1500},
+        {"name": "TorqueLimit", "start_bit": 32, "length": 16, "byte_order": "little_endian", "scale": 0.5, "offset": 0, "unit": "Nm", "min": 0, "max": 2000},
+        {"name": "TorqueMode", "start_bit": 48, "length": 4, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 10},
+        {"name": "TorqueValid", "start_bit": 52, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1}
+      ]
+    },
+    {
+      "id": "0x120", "name": "EMS_Status_1", "sender": "EMS", "cycle_ms": 20, "dlc": 8,
+      "signals": [
+        {"name": "EngineRPM", "start_bit": 0, "length": 16, "byte_order": "little_endian", "scale": 0.25, "offset": 0, "unit": "RPM", "min": 0, "max": 16383},
+        {"name": "CoolantTemp", "start_bit": 16, "length": 8, "byte_order": "little_endian", "scale": 1, "offset": -40, "unit": "degC", "min": -40, "max": 215},
+        {"name": "IntakeAirTemp", "start_bit": 24, "length": 8, "byte_order": "little_endian", "scale": 1, "offset": -40, "unit": "degC", "min": -40, "max": 215},
+        {"name": "EngineRunning", "start_bit": 32, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "CheckEngineLamp", "start_bit": 33, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "FuelCutActive", "start_bit": 34, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1}
+      ]
+    },
+    {
+      "id": "0x200", "name": "ABS_WheelSpeed", "sender": "ABS", "cycle_ms": 10, "dlc": 8,
+      "signals": [
+        {"name": "WheelSpeed_FL", "start_bit": 0, "length": 16, "byte_order": "little_endian", "scale": 0.01, "offset": 0, "unit": "km/h", "min": 0, "max": 655.35},
+        {"name": "WheelSpeed_FR", "start_bit": 16, "length": 16, "byte_order": "little_endian", "scale": 0.01, "offset": 0, "unit": "km/h", "min": 0, "max": 655.35},
+        {"name": "WheelSpeed_RL", "start_bit": 32, "length": 16, "byte_order": "little_endian", "scale": 0.01, "offset": 0, "unit": "km/h", "min": 0, "max": 655.35},
+        {"name": "WheelSpeed_RR", "start_bit": 48, "length": 16, "byte_order": "little_endian", "scale": 0.01, "offset": 0, "unit": "km/h", "min": 0, "max": 655.35}
+      ]
+    },
+    {
+      "id": "0x400", "name": "ADAS_Status_1", "sender": "ADAS", "cycle_ms": 20, "dlc": 8,
+      "signals": [
+        {"name": "ACC_Active", "start_bit": 0, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "ACC_SetSpeed", "start_bit": 1, "length": 9, "byte_order": "little_endian", "scale": 0.5, "offset": 0, "unit": "km/h", "min": 0, "max": 255},
+        {"name": "LKA_Active", "start_bit": 10, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "AEB_Warning", "start_bit": 11, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "AEB_BrakeReq", "start_bit": 12, "length": 1, "byte_order": "little_endian", "scale": 1, "offset": 0, "unit": "", "min": 0, "max": 1},
+        {"name": "TargetDistance", "start_bit": 16, "length": 16, "byte_order": "little_endian", "scale": 0.1, "offset": 0, "unit": "m", "min": 0, "max": 300},
+        {"name": "TargetSpeed", "start_bit": 32, "length": 16, "byte_order": "little_endian", "scale": 0.01, "offset": 0, "unit": "km/h", "min": 0, "max": 300}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+"""Auto-generated HIL/SIL test: {{ test_id }}
+
+Requirement: {{ requirement_id }}
+Description: {{ requirement_text }}
+Generated from: {{ source_document }}
+"""
+
+from __future__ import annotations
+
+# --- Test Configuration ---
+TEST_ID = "{{ test_id }}"
+REQUIREMENT_ID = "{{ requirement_id }}"
+BENCH_MODE = "SIL"  # SIL replay; swap to "HIL" for real bench
+
+
+def setup() -> dict[str, object]:
+    """Initialize test bench signals."""
+    return {
+{% for signal in signals %}
+        "{{ signal.name }}": {{ signal.initial_value }},
+{% endfor %}
+    }
+
+
+{% for step in steps %}
+def step_{{ loop.index }}() -> dict[str, object]:
+    """{{ step.description }}"""
+    stimulus = {
+{% for sig_name, sig_value in step.stimulus.items() %}
+        "{{ sig_name }}": {{ sig_value }},
+{% endfor %}
+    }
+    expected = {
+{% for sig_name, sig_value in step.expected.items() %}
+        "{{ sig_name }}": {{ sig_value }},
+{% endfor %}
+    }
+    return {"stimulus": stimulus, "expected": expected}
+
+
+{% endfor %}
+def get_test_steps() -> list[dict[str, object]]:
+    """Return all test steps for the executor."""
+    return [
+{% for step in steps %}
+        step_{{ loop.index }}(),
+{% endfor %}
+    ]
