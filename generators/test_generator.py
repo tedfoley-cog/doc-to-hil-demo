@@ -157,7 +157,7 @@ def _parse_condition_stimulus(condition: str) -> dict[str, float | int | str]:
         stimulus["TransRange"] = 0  # PARK
     if "OIL_PRESS" in condition:
         stimulus["OilPressure"] = 25
-    if "Brake" in condition.lower() or "brake" in condition:
+    if "brake" in condition.lower():
         stimulus["BrakePedal"] = 1
     if "speed" in condition.lower():
         stimulus["VehicleSpeed"] = 0

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from parsers.docx_parser import parse_can_catalog, parse_dtc_matrix
 from parsers.excel_parser import parse_requirements_xlsx, parse_test_parameters_xlsx
-from parsers.models import DocumentInventory, EntityType, ParsedEntity
+from parsers.models import DocumentInventory, EntityRelationship, EntityType, ParsedEntity
 from parsers.pdf_parser import (
     extract_can_signals_from_pdf,
     extract_flow_steps,
@@ -159,6 +159,23 @@ def run_all_parsers(source_dir: Path) -> DocumentInventory:
     if dtc_json.exists():
         doc, dtcs = parse_dtc_matrix(dtc_json)
         for d in dtcs:
+            rels: list[EntityRelationship] = []
+            if d.related_requirement:
+                rels.append(
+                    EntityRelationship(
+                        source_id=d.code,
+                        target_id=d.related_requirement,
+                        relationship_type="related_requirement",
+                    )
+                )
+            if d.related_signal:
+                rels.append(
+                    EntityRelationship(
+                        source_id=d.code,
+                        target_id=d.related_signal,
+                        relationship_type="related_signal",
+                    )
+                )
             doc.entities.append(
                 ParsedEntity(
                     entity_id=d.code,
@@ -171,6 +188,7 @@ def run_all_parsers(source_dir: Path) -> DocumentInventory:
                         "category": d.category,
                     },
                     source_document=doc.document_id,
+                    relationships=rels,
                 )
             )
         inventory.total_dtcs += len(dtcs)
