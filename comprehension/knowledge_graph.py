@@ -154,25 +154,23 @@ def _link_dtcs_to_requirements(
 def _link_dtcs_to_signals(
     graph: KnowledgeGraph, inventory: DocumentInventory
 ) -> None:
-    """Link DTCs to related CAN signals."""
-    dtc_nodes = graph.get_nodes_by_type("dtc")
+    """Link DTCs to related CAN signals via inventory relationships."""
     signal_nodes = {n.node_id: n for n in graph.get_nodes_by_type("signal")}
-    _dummy = inventory  # inventory reserved for future cross-ref lookup
 
-    for dtc_file in Path("source_documents/word_docs").glob("diagnostic_dtc_matrix.extracted.json"):
-        with open(dtc_file) as f:
-            data = json.load(f)
-        for xref in data.get("cross_references", []):
-            dtc_code = xref.get("dtc", "")
-            signal_ref = xref.get("signal", "")
-            if dtc_code in {n.node_id for n in dtc_nodes} and signal_ref in signal_nodes:
-                graph.add_edge(
-                    GraphEdge(
-                        source=dtc_code,
-                        target=signal_ref,
-                        edge_type="monitors_signal",
+    for doc in inventory.documents:
+        for entity in doc.entities:
+            if entity.entity_type != EntityType.DTC:
+                continue
+            dtc_code = entity.entity_id
+            for rel in entity.relationships:
+                if rel.relationship_type == "related_signal" and rel.target_id in signal_nodes:
+                    graph.add_edge(
+                        GraphEdge(
+                            source=dtc_code,
+                            target=rel.target_id,
+                            edge_type="monitors_signal",
+                        )
                     )
-                )
 
 
 def _link_requirements_to_signals(
